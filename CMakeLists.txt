@@ -34,7 +34,7 @@ install(TARGETS AprilTagNode
     LIBRARY DESTINATION lib
 )
 
-install(DIRECTORY cfg/ DESTINATION share/${PROJECT_NAME}/cfg)
+install(DIRECTORY cfg DESTINATION share/${PROJECT_NAME})
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 

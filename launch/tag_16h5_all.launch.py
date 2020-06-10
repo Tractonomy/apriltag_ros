@@ -1,22 +1,20 @@
+import os
 import launch
+from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
-# detect all 16h5 tags
-cfg_16h5 = {
-    "image_transport": "raw",
-    "family": "16h5",
-    "size": 0.162,
-    "max_hamming": 0,
-    "z_up": True
-}
-
 def generate_launch_description():
+    apriltag_ros_prefix = get_package_share_directory("apriltag_ros")
     composable_node = ComposableNode(
         name='apriltag',
         package='apriltag_ros', plugin='AprilTagNode',
-        remappings=[("/apriltag/image", "/camera/image"), ("/apriltag/camera_info", "/camera/camera_info")],
-        parameters=[cfg_16h5])
+        remappings=[("image", "/camera/color/image_raw"), ("camera_info", "/camera/color/camera_info")],
+        parameters=[os.path.join(
+                    apriltag_ros_prefix,
+                    "cfg",
+                    "tags_16h5_all.yaml",
+                    )])
     container = ComposableNodeContainer(
         name='tag_container',
         namespace='apriltag',
