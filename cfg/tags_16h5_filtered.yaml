@@ -1,7 +1,7 @@
 image_transport: raw    # image format
 family: 16h5            # tag family, one of 16h5, 25h7, 25h9, 36h10, 36h11, 36artoolkit
 size: 0.162             # tag edge size in meter
-z_up: true              # rotate about x-axis to have Z pointing upwards
+z_up: false             # rotate about x-axis to have Z pointing upwards
 
 # (optional) tuning of detection
 # see "apriltag.h" for more documentation on these optional parameters
