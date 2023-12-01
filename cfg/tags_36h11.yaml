@@ -16,6 +16,7 @@
 
         # optional list of tags
         tag:
+            track_all: false        # optionally track all tags with default name except the once listed in frames
             ids: [9, 14]            # tag ID
             frames: [base, object]  # optional frame name
             sizes: [0.162, 0.162]   # optional tag-specific edge size
