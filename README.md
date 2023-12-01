@@ -47,6 +47,7 @@ apriltag:                 # node name
     # (optional) list of tags
     # If defined, 'frames' and 'sizes' must have the same length as 'ids'.
     tag:
+      track_all: false                    # optionally track all tags with default name except the once listed in frames
       ids:    [<id1>, <id2>, ...]         # tag IDs for which to publish transform
       frames: [<frame1>, <frame2>, ...]   # frame names
       sizes:  [<size1>, <size1>, ...]     # tag-specific edge size, overrides the default 'size'
@@ -54,7 +55,7 @@ apriltag:                 # node name
 
 The `family` (string) defines the tag family for the detector and must be one of `16h5`, `25h9`, `36h11`, `Circle21h7`, `Circle49h12`, `Custom48h12`, `Standard41h12`, `Standard52h13`. `size` (float) is the tag edge size in meters, assuming square markers.
 
-Instead of publishing all tag poses, the list `tag.ids` can be used to only publish selected tag IDs. Each tag can have an associated child frame name in `tag.frames` and a tag specific size in `tag.sizes`. These lists must either have the same length as `tag.ids` or may be empty. In this case, a default frame name of the form `tag<family>:<id>` and the default tag edge size `size` will be used.
+Instead of publishing all tag poses, the list `tag.ids` can be used to only publish selected tag IDs. Each tag can have an associated child frame name in `tag.frames` and a tag specific size in `tag.sizes`. These lists must either have the same length as `tag.ids` or may be empty. In this case, a default frame name of the form `tag<family>:<id>` and the default tag edge size `size` will be used. Renaming tags while still tracking all other tags can be enabled with `tag.track_all`, tags not listed will have the default name and listed tags will receive the name from `tag.frames`.
 
 The remaining parameters are set to the their default values from the library. See `apriltag.h` for a more detailed description of their function.
 

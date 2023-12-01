@@ -112,6 +112,7 @@ private:
     double tag_edge_size;
     std::atomic<int> max_hamming;
     std::atomic<bool> profile;
+    std::atomic<bool> tag_track_all;
     std::unordered_map<int, std::string> tag_frames;
     std::unordered_map<int, double> tag_sizes;
 
@@ -142,6 +143,7 @@ AprilTagNode::AprilTagNode(const rclcpp::NodeOptions& options)
     // read-only parameters
     const std::string tag_family = declare_parameter("family", "36h11", descr("tag family", true));
     tag_edge_size = declare_parameter("size", 1.0, descr("default tag size", true));
+    tag_track_all = declare_parameter("tag.track_all", false, descr("default tag size", true));
 
     // get tag names, IDs and sizes
     const auto ids = declare_parameter("tag.ids", std::vector<int64_t>{}, descr("tag ids", true));
@@ -224,7 +226,7 @@ void AprilTagNode::onCamera(const sensor_msgs::msg::Image::ConstSharedPtr& msg_i
                      det->hamming, det->decision_margin);
 
         // ignore untracked tags
-        if(!tag_frames.empty() && !tag_frames.count(det->id)) { continue; }
+        if(!tag_track_all && !tag_frames.empty() && !tag_frames.count(det->id)) { continue; }
 
         // reject detections with more corrected bits than allowed
         if(det->hamming > max_hamming) { continue; }
