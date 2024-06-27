@@ -14,6 +14,7 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 // apriltag
 #include "tag_functions.hpp"
@@ -74,6 +75,7 @@ private:
     std::atomic<int> max_hamming;
     std::atomic<bool> profile;
     std::atomic<bool> tag_track_all;
+    std::atomic<bool> z_up;
     std::unordered_map<int, std::string> tag_frames;
     std::unordered_map<int, double> tag_sizes;
 
@@ -112,6 +114,7 @@ AprilTagNode::AprilTagNode(const rclcpp::NodeOptions& options)
     const std::string tag_family = declare_parameter("family", "36h11", descr("tag family", true));
     tag_edge_size = declare_parameter("size", 1.0, descr("default tag size", true));
     tag_track_all = declare_parameter("tag.track_all", false, descr("default tag size", true));
+    z_up = declare_parameter("z_up", true, descr("rotate about x-axis to have Z pointing upwards", true));
 
     // get tag names, IDs and sizes
     const auto ids = declare_parameter("tag.ids", std::vector<int64_t>{}, descr("tag ids", true));
@@ -221,7 +224,7 @@ void AprilTagNode::onCamera(const sensor_msgs::msg::Image::ConstSharedPtr& msg_i
         tf.child_frame_id = tag_frames.count(det->id) ? tag_frames.at(det->id) : std::string(det->family->name) + ":" + std::to_string(det->id);
         const double size = tag_sizes.count(det->id) ? tag_sizes.at(det->id) : tag_edge_size;
         if(estimate_pose != nullptr) {
-            tf.transform = estimate_pose(det, intrinsics, size);
+            tf.transform = estimate_pose(det, intrinsics, size, z_up);
         }
 
         tfs.push_back(tf);

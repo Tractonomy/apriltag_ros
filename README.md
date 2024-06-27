@@ -33,6 +33,7 @@ apriltag:                 # node name
     family: 36h11         # tag family name: 16h5, 25h9, 36h11
     size: 1.0             # default tag edge size in meter
     profile: false        # print profiling information to stdout
+    z_up: true            # rotate about x-axis to have Z pointing upwards
 
     # tuning of detection (defaults)
     max_hamming: 0        # maximum allowed hamming distance (corrected bits)
