@@ -15,6 +15,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <cmath>
 
 // apriltag
 #include "tag_functions.hpp"
@@ -76,6 +77,8 @@ private:
     std::atomic<bool> profile;
     std::atomic<bool> tag_track_all;
     std::atomic<bool> z_up;
+    std::atomic<bool> filter_by_distance;
+    std::atomic<double> max_tag_distance;
     std::unordered_map<int, std::string> tag_frames;
     std::unordered_map<int, double> tag_sizes;
 
@@ -134,6 +137,14 @@ AprilTagNode::AprilTagNode(const rclcpp::NodeOptions& options)
 
     declare_parameter("max_hamming", 0, descr("reject detections with more corrected bits than allowed"));
     declare_parameter("profile", false, descr("print profiling information to stdout"));
+
+    // distance-based filtering parameters
+    filter_by_distance = declare_parameter("filter_by_distance", false, descr("only publish TF for tags within max_tag_distance"));
+    max_tag_distance = declare_parameter("max_tag_distance", 3.0, descr("maximum distance (meters) from camera to publish tag TF"));
+
+    if(filter_by_distance) {
+        RCLCPP_INFO(get_logger(), "Distance filtering ENABLED: max_tag_distance = %.2f m", max_tag_distance.load());
+    }
 
     if(!frames.empty()) {
         if(ids.size() != frames.size()) {
@@ -225,9 +236,31 @@ void AprilTagNode::onCamera(const sensor_msgs::msg::Image::ConstSharedPtr& msg_i
         const double size = tag_sizes.count(det->id) ? tag_sizes.at(det->id) : tag_edge_size;
         if(estimate_pose != nullptr) {
             tf.transform = estimate_pose(det, intrinsics, size, z_up);
+            
+            // Distance-based filtering
+            if(filter_by_distance) {
+                // Calculate distance from camera (parent frame)
+                const double dx = tf.transform.translation.x;
+                const double dy = tf.transform.translation.y;
+                const double dz = tf.transform.translation.z;
+                const double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+                
+                // Only publish TF if within threshold
+                if(distance <= max_tag_distance) {
+                    tfs.push_back(tf);
+                    RCLCPP_DEBUG(get_logger(),
+                        "Tag %s: distance %.2f m (within threshold %.2f m) - TF published",
+                        tf.child_frame_id.c_str(), distance, max_tag_distance.load());
+                } else {
+                    RCLCPP_DEBUG(get_logger(),
+                        "Tag %s: distance %.2f m (exceeds threshold %.2f m) - TF NOT published",
+                        tf.child_frame_id.c_str(), distance, max_tag_distance.load());
+                }
+            } else {
+                // No filtering - publish all TFs
+                tfs.push_back(tf);
+            }
         }
-
-        tfs.push_back(tf);
     }
 
     pub_detections->publish(msg_detections);
@@ -254,6 +287,8 @@ AprilTagNode::onParameter(const std::vector<rclcpp::Parameter>& parameters)
         IF("detector.debug", td->debug)
         IF("max_hamming", max_hamming)
         IF("profile", profile)
+        IF("filter_by_distance", filter_by_distance)
+        IF("max_tag_distance", max_tag_distance)
     }
 
     mutex.unlock();
